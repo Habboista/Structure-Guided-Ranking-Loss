@@ -116,11 +116,11 @@ class Decoder(nn.Module):
 class DepthNet(nn.Module):
 
     __factory = {
-        18: resnet.resnet18,
-        34: resnet.resnet34,
-        50: resnet.resnet50,
-        101: resnet.resnet101,
-        152: resnet.resnet152
+        18: resnet18,
+        34: resnet34,
+        50: resnet50,
+        101: resnet101,
+        152: resnet152
     }
 
     def __init__(self,

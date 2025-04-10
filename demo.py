@@ -1,7 +1,4 @@
-#!/usr/bin/env python
 # coding: utf-8
-
-# demo
 
 """
 Author: Ke Xian
@@ -22,11 +19,10 @@ import glob
 import matplotlib.pyplot as plt
 plt.switch_backend('agg')
 import warnings
-warnings.filterwarnings("ignore")
+#warnings.filterwarnings("ignore")
 from PIL import Image
 
-sys.path.append('models')
-import DepthNet
+from models import DepthNet
 
 # =======================
 # demo
@@ -47,11 +43,11 @@ def demo(net, args):
         ori_width, ori_height = img.size
         int_width = args.img_size[0]
         int_height = args.img_size[1]
-        img = img.resize((int_width, int_height), Image.ANTIALIAS)
+        img = img.resize((int_width, int_height), Image.LANCZOS)
         tensor_img = img_transform(img)
 
         # forward
-        input_img = torch.autograd.Variable(tensor_img.cuda().unsqueeze(0), volatile=True)
+        input_img = tensor_img.cuda().unsqueeze(0)
         output = net(input_img)
 
         # Normalization and save results
@@ -62,20 +58,48 @@ def demo(net, args):
         image_pil = Image.fromarray(depth_norm)
 
         output_dir = os.path.join(args.result_dir, im)
-        image_pil = image_pil.resize((ori_width, ori_height), Image.BILINEAR)
+        image_pil = image_pil.resize(
+            (ori_width, ori_height),
+            Image.BILINEAR,
+        )
         plt.imsave(output_dir, np.asarray(image_pil), cmap='inferno')
 
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='MRDP Testing/Evaluation')
-    parser.add_argument('--img_size', default=[448, 448], type=list, help='Image size of network input')
-    parser.add_argument('--data_dir', default='examples', type=str, help='Data path')
-    parser.add_argument('--result_dir', default='demo_results', type=str, help='Directory for saving results, default: demo_results')
-    parser.add_argument('--gpu_id', default=0, type=int, help='GPU id, default:0')
+    parser.add_argument(
+        '--img-size',
+        default=[448, 448],
+        type=int,
+        nargs=2,
+        help='Image size of network input',
+    )
+    parser.add_argument(
+        '--data-dir',
+        default='examples',
+        type=str,
+        help='Data path',
+    )
+    parser.add_argument(
+        '--result-dir',
+        default='demo_results',
+        type=str,
+        help='Directory for saving results, default: demo_results',
+    )
+    parser.add_argument(
+        '--checkpoint',
+        default='model.pth.tar',
+        type=str,
+        help='Path of the pretrained model',
+    )
+    parser.add_argument(
+        '--gpu-id',
+        default=0,
+        type=int,
+        help='GPU id, default:0',
+    )
     args = parser.parse_args()
-
-    args.checkpoint = 'model.pth.tar'
 
     if not os.path.exists(args.result_dir):
         os.makedirs(args.result_dir)
@@ -83,7 +107,7 @@ if __name__ == '__main__':
     gpu_id = args.gpu_id
     torch.cuda.device(gpu_id)
 
-    net = DepthNet.DepthNet()
+    net = DepthNet()
     net = torch.nn.DataParallel(net, device_ids=[0]).cuda()
     checkpoint = torch.load(args.checkpoint)
     net.load_state_dict(checkpoint['state_dict'])
