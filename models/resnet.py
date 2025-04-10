@@ -1,25 +1,16 @@
 import torch.nn as nn
 import torchvision
 
-model_urls = {
-    'resnet18': \
-        'https://download.pytorch.org/models/resnet18-5c106cde.pth',
-    'resnet34': \
-        'https://download.pytorch.org/models/resnet34-333f7ec4.pth',
-    'resnet50': \
-        'https://download.pytorch.org/models/resnet50-19c8e357.pth',
-    'resnet101': \
-        'https://download.pytorch.org/models/resnet101-5d3b4d8f.pth',
-    'resnet152': \
-        'https://download.pytorch.org/models/resnet152-b121ed2d.pth',
-}
-
+from torchvision.models import ResNet18_Weights
+from torchvision.models import ResNet34_Weights
+from torchvision.models import ResNet50_Weights
+from torchvision.models import ResNet101_Weights
+from torchvision.models import ResNet152_Weights
 
 def conv3x3(in_planes, out_planes, stride=1):
     """3x3 convolution with padding"""
     return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
                      padding=1, bias=False)
-
 
 class BasicBlock(nn.Module):
     expansion = 1
@@ -187,7 +178,9 @@ def resnet18(pretrained=True, **kwargs):
     """
     model = ResNet(BasicBlock, [2, 2, 2, 2], **kwargs)
     if pretrained:
-        pretrained_model = torchvision.models.resnet18(pretrained=True)
+        pretrained_model = torchvision.models.resnet18(
+            weights=ResNet18_Weights.IMAGENET1K_V1,
+        )
         pretrained_dict = pretrained_model.state_dict()
         model_dict = model.state_dict()
         pretrained_dict = {k : v
@@ -208,7 +201,9 @@ def resnet34(pretrained=True, **kwargs):
     """
     model = ResNet(BasicBlock, [3, 4, 6, 3], **kwargs)
     if pretrained:
-        pretrained_model = torchvision.models.resnet34(pretrained=True)
+        pretrained_model = torchvision.models.resnet34(
+            weights=ResNet34_Weights.IMAGENET1K_V1,
+        )
         pretrained_dict = pretrained_model.state_dict()
         model_dict = model.state_dict()
         pretrained_dict = {k : v
@@ -229,7 +224,9 @@ def resnet50(pretrained=True, **kwargs):
     """
     model = ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
     if pretrained:
-        pretrained_model = torchvision.models.resnet50(pretrained=True)
+        pretrained_model = torchvision.models.resnet50(
+            weights=ResNet50_Weights.IMAGENET1K_V1,
+        )
         pretrained_dict = pretrained_model.state_dict()
         model_dict = model.state_dict()
         pretrained_dict = {k:v for k, v in pretrained_dict.items() if k in model_dict}
@@ -248,7 +245,9 @@ def resnet101(pretrained=True, **kwargs):
     """
     model = ResNet(Bottleneck, [3, 4, 23, 3], **kwargs)
     if pretrained:
-        pretrained_model = torchvision.models.resnet101(pretrained=True)
+        pretrained_model = torchvision.models.resnet101(
+            weights=ResNet101_Weights.IMAGENET1K_V1,
+        )
         pretrained_dict = pretrained_model.state_dict()
         model_dict = model.state_dict()
         pretrained_dict = {k : v 
@@ -269,7 +268,9 @@ def resnet152(pretrained=True, **kwargs):
     """
     model = ResNet(Bottleneck, [3, 8, 36, 3], **kwargs)
     if pretrained:
-        pretrained_model = torchvision.models.resnet152(pretrained=True)
+        pretrained_model = torchvision.models.resnet152(
+            weights=ResNet152_Weights.IMAGENET1K_V1,
+        )
         pretrained_dict = pretrained_model.state_dict()
         model_dict = model.state_dict()
         pretrained_dict = {k : v
