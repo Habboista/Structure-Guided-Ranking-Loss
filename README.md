@@ -10,17 +10,16 @@ This repository contains a pytorch implementation of our CVPR2020 paper "Structu
 - [ ] Mix data training
 
 ## Prerequisites
-* Pytorch >= 0.4.1
-* CUDA >= 0.8
-* Python >= 2.7
-* glob, matplotlib
-* Need to compile the syncbn module in models/syncbn. Note that the directory of the syncbn module should be modified in some .py files (i.e., DepthNet.py, resnet.py and networks.py)
-* Download the [model.pth.tar](https://drive.google.com/file/d/1p8c8-nUTNry5usQmGdTC2TrwWrp3dQ0y/view?usp=sharing)
+```bash
+python -m pip install -r requirements.txt
+```
+Download the [model.pth.tar](https://drive.google.com/file/d/1p8c8-nUTNry5usQmGdTC2TrwWrp3dQ0y/view?usp=sharing)
+and place it in the repository.
 
 ## Inference
 ```bash
-# Before running, you should set the CUDA_VISIBLE_DEVICES in demo.sh
-bash demo.sh
+# If needed, you should set the CUDA_VISIBLE_DEVICES in run_demo.sh
+bash run_demo.sh
 
 ```
 
