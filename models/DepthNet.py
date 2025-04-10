@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # coding: utf-8
 
 '''
@@ -13,32 +12,69 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
 
-import sys
-sys.path.append('/data0/kexian/Code/kxian_Adobe/MPO_edgeGuidedRanking/models/syncbn')
-from modules import nn as NN
-
-import resnet
-
-from networks import *
+from .networks import AO
+from .networks import FFM
+from .networks import FTB
+from .resnet import resnet18
+from .resnet import resnet34
+from .resnet import resnet50
+from .resnet import resnet101
+from .resnet import resnet152
 
 class Decoder(nn.Module):
-    def __init__(self, inchannels = [256, 512, 1024, 2048], midchannels = [256, 256, 256, 512], upfactors = [2,2,2,2], outchannels = 1):
+    def __init__(self,
+        inchannels = [256, 512, 1024, 2048],
+        midchannels = [256, 256, 256, 512],
+        upfactors = [2,2,2,2],
+        outchannels = 1,
+    ):
         super(Decoder, self).__init__()
         self.inchannels = inchannels
         self.midchannels = midchannels
         self.upfactors = upfactors
         self.outchannels = outchannels
 
-        self.conv = FTB(inchannels=self.inchannels[3], midchannels=self.midchannels[3])
-        self.conv1 = nn.Conv2d(in_channels=self.midchannels[3], out_channels=self.midchannels[2], kernel_size=3, padding=1, stride=1, bias=True)
-        self.upsample = nn.Upsample(scale_factor=self.upfactors[3], mode='bilinear', align_corners=True)
+        self.conv = FTB(
+            inchannels=self.inchannels[3],
+            midchannels=self.midchannels[3],
+        )
+        self.conv1 = nn.Conv2d(
+            in_channels=self.midchannels[3],
+            out_channels=self.midchannels[2],
+            kernel_size=3,
+            padding=1,
+            stride=1,
+            bias=True,
+        )
+        self.upsample = nn.Upsample(
+            scale_factor=self.upfactors[3],
+            mode='bilinear',
+            align_corners=True,
+        )
+        self.ffm2 = FFM(
+            inchannels=self.inchannels[2],
+            midchannels=self.midchannels[2],
+            outchannels=self.midchannels[2],
+            upfactor=self.upfactors[2],
+        )
+        self.ffm1 = FFM(
+            inchannels=self.inchannels[1],
+            midchannels=self.midchannels[1],
+            outchannels=self.midchannels[1],
+            upfactor=self.upfactors[1],
+        )
+        self.ffm0 = FFM(
+            inchannels=self.inchannels[0],
+            midchannels=self.midchannels[0],
+            outchannels=self.midchannels[0],
+            upfactor=self.upfactors[0],
+        )
 
-        self.ffm2 = FFM(inchannels=self.inchannels[2], midchannels=self.midchannels[2], outchannels = self.midchannels[2], upfactor=self.upfactors[2])
-        self.ffm1 = FFM(inchannels=self.inchannels[1], midchannels=self.midchannels[1], outchannels = self.midchannels[1], upfactor=self.upfactors[1])
-        self.ffm0 = FFM(inchannels=self.inchannels[0], midchannels=self.midchannels[0], outchannels = self.midchannels[0], upfactor=self.upfactors[0])
-
-        self.outconv = AO(inchannels=self.inchannels[0], outchannels=self.outchannels, upfactor=2)
-
+        self.outconv = AO(
+            inchannels=self.inchannels[0],
+            outchannels=self.outchannels,
+            upfactor=2,
+        )
         self._init_params()
 
     def _init_params(self):
@@ -55,7 +91,7 @@ class Decoder(nn.Module):
                 #init.xavier_normal_(m.weight)
                 if m.bias is not None:
                     init.constant_(m.bias, 0)
-            elif isinstance(m, NN.BatchNorm2d): #NN.BatchNorm2d
+            elif isinstance(m, nn.BatchNorm2d):
                 init.constant_(m.weight, 1)
                 init.constant_(m.bias, 0)
             elif isinstance(m, nn.Linear):
@@ -64,7 +100,6 @@ class Decoder(nn.Module):
                     init.constant_(m.bias, 0)
 
     def forward(self, features):
-        _,_,h,w = features[3].size()
         x = self.conv(features[3])
         x = self.conv1(x)
         x = self.upsample(x)
@@ -79,6 +114,7 @@ class Decoder(nn.Module):
         return x
 
 class DepthNet(nn.Module):
+
     __factory = {
         18: resnet.resnet18,
         34: resnet.resnet34,
@@ -86,14 +122,16 @@ class DepthNet(nn.Module):
         101: resnet.resnet101,
         152: resnet.resnet152
     }
+
     def __init__(self,
-                backbone='resnet',
-                depth=50,
-                pretrained=True,
-                inchannels=[256, 512, 1024, 2048],
-                midchannels=[256, 256, 256, 512],
-                upfactors=[2, 2, 2, 2],
-                outchannels=1):
+        backbone='resnet',
+        depth=50,
+        pretrained=True,
+        inchannels=[256, 512, 1024, 2048],
+        midchannels=[256, 256, 256, 512],
+        upfactors=[2, 2, 2, 2],
+        outchannels=1,
+    ):
         super(DepthNet, self).__init__()
         self.backbone = backbone
         self.depth = depth
@@ -106,19 +144,17 @@ class DepthNet(nn.Module):
         # Build model
         if self.depth not in DepthNet.__factory:
             raise KeyError("Unsupported depth:", self.depth)
-        self.encoder = DepthNet.__factory[depth](pretrained=pretrained)
 
-        self.decoder = Decoder(inchannels=self.inchannels, midchannels=self.midchannels, upfactors=self.upfactors, outchannels=self.outchannels)
+        self.encoder = DepthNet.__factory[depth](pretrained=pretrained)
+        self.decoder = Decoder(
+            inchannels=self.inchannels,
+            midchannels=self.midchannels,
+            upfactors=self.upfactors,
+            outchannels=self.outchannels,
+        )
 
     def forward(self, x):
         x = self.encoder(x) # 1/4, 1/8, 1/16, 1/32
         x = self.decoder(x)
 
         return x
-
-if __name__ == '__main__':
-    net = DepthNet(depth=50, pretrained=True)
-    print(net)
-    inputs = torch.ones(4,3,128,128)
-    out = net(inputs)
-    print(out.size())
