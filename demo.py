@@ -35,6 +35,8 @@ def demo(net, args):
     ])
 
     for im in os.listdir(data_dir):
+        if im == '.placeholder':
+            continue
         im_dir = os.path.join(data_dir, im)
         print('Processing img: {}'.format(im_dir))
 
