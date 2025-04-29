@@ -77,13 +77,13 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--data-dir',
-        default='examples',
+        default='input',
         type=str,
         help='Data path',
     )
     parser.add_argument(
         '--result-dir',
-        default='demo_results',
+        default='output',
         type=str,
         help='Directory for saving results, default: demo_results',
     )
